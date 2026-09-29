@@ -1,0 +1,10 @@
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { filteredEntries } from "@/lib/diary";
+import { moods } from "@/types/diary";
+import { DiaryCard } from "@/components/diary-card";
+import { EmptyState } from "@/components/empty-state";
+import { DateFilter } from "@/components/date-filter";
+import { moodLabel, today } from "@/lib/utils";
+import { isLocalReadOnly } from "@/lib/supabase/config";
+export default async function DiaryPage({ searchParams }: { searchParams: Promise<{ month?: string; mood?: string; tag?: string }> }) { const filters = await searchParams; const selectedMonth = filters.month || today().slice(0, 7); const list = await filteredEntries({ ...filters, month: selectedMonth }); return <section className="page-sheet glass"><div className="section-head"><div><p className="eyebrow" style={{ color: "var(--leaf)" }}>Your daily library</p><h1 className="section-title">Every day, kept close.</h1></div>{!isLocalReadOnly && <Link className="button button-quiet compact-action" href="/diary/new"><Plus size={20} />New daily</Link>}</div><form className="filter-bar glass" action="/diary"><DateFilter value={selectedMonth} /><select className="search-input" name="mood" defaultValue={filters.mood}><option value="">Every mood</option>{moods.map((mood) => <option value={mood} key={mood}>{moodLabel(mood)}</option>)}</select><input className="search-input" name="tag" placeholder="Tag" defaultValue={filters.tag} /><button className="button button-dark filter-submit" type="submit">Filter</button></form>{list.length ? <div className="card-grid">{list.map((item) => <DiaryCard key={item.id} entry={item} />)}</div> : <EmptyState title="Nothing found here" body="Try another filter, or begin a fresh page." action={!isLocalReadOnly} />}</section>; }

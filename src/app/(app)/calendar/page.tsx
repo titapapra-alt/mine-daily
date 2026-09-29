@@ -1,0 +1,4 @@
+import { entries } from "@/lib/diary";
+import { CalendarView } from "@/components/calendar-view";
+import { getCalendarEvents } from "@/lib/calendar-events";
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; year?: string }> }) { const params = await searchParams; const now = new Date(); const month = Math.max(0, Math.min(11, Number(params.month ?? now.getMonth()))); const year = Number(params.year ?? now.getFullYear()); const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`; const endDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(new Date(year, month + 1, 0).getDate()).padStart(2, "0")}`; const [list, calendarEvents] = await Promise.all([entries(), getCalendarEvents(startDate, endDate)]); return <section className="page-sheet glass"><CalendarView key={`${year}-${month}`} year={year} month={month} entries={list} initialEvents={calendarEvents} /></section>; }

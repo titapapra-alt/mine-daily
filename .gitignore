@@ -1,0 +1,14 @@
+node_modules
+.next
+.env*
+!.env.example
+*.tsbuildinfo
+.vercel
+.npm-cache
+.pnpm-store
+outputs
+*.log
+*.xlsx
+
+.vercel
+.env*
