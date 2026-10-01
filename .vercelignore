@@ -1,0 +1,4 @@
+/source data/
+src/data/doctor-visits.ts
+/supabase/
+*.xlsx

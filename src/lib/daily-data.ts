@@ -4,14 +4,15 @@ import { assertLocalWritable } from "@/lib/supabase/config";
 export type Meal = { id: string; time: string; calories: string; detail: string };
 export type Exercise = { id: string; type: string; part: string; note: string };
 export type SeedCyclingPhase = "" | "phase_1" | "phase_2";
-export type DayData = { id?: string; date: string; sleep: string; weight: string; ifHour: string; seedCycling: SeedCyclingPhase; water: boolean; poo: boolean; caffeine: boolean; period: boolean; note: string; meals: Meal[]; exercises: Exercise[] };
+export type BedTier = "" | "tier_1" | "tier_2" | "tier_3";
+export type DayData = { id?: string; date: string; sleep: string; weight: string; ifHour: string; seedCycling: SeedCyclingPhase; bedTier: BedTier; water: boolean; poo: boolean; caffeine: boolean; period: boolean; note: string; meals: Meal[]; exercises: Exercise[] };
 
 type RawMeal = { id: string; meal_time: string | null; calories: number; detail: string };
 type RawExercise = { id: string; exercise_type: string; exercise_part: string | null; exercise_note: string | null };
-type RawDay = { id: string; entry_date: string; sleep_hours: number | null; weight_kg: number | null; if_hour: string | null; seed_cycling: Exclude<SeedCyclingPhase, ""> | null; water: boolean; poo: boolean; caffeine: boolean; period: boolean; note: string | null; daily_meals?: RawMeal[]; daily_exercises?: RawExercise[] };
+type RawDay = { id: string; entry_date: string; sleep_hours: number | null; weight_kg: number | null; if_hour: string | null; seed_cycling: Exclude<SeedCyclingPhase, ""> | null; bed_tier: Exclude<BedTier, ""> | null; water: boolean; poo: boolean; caffeine: boolean; period: boolean; note: string | null; daily_meals?: RawMeal[]; daily_exercises?: RawExercise[] };
 
-const blankDay = (date: string): DayData => ({ date, sleep: "", weight: "", ifHour: "", seedCycling: "", water: false, poo: false, caffeine: false, period: false, note: "", meals: [], exercises: [] });
-const mapDay = (value: RawDay): DayData => ({ id: value.id, date: value.entry_date, sleep: value.sleep_hours?.toFixed(2) ?? "", weight: value.weight_kg?.toFixed(2) ?? "", ifHour: value.if_hour ?? "", seedCycling: value.seed_cycling ?? "", water: value.water, poo: value.poo, caffeine: value.caffeine, period: value.period, note: value.note ?? "", meals: (value.daily_meals ?? []).sort((a, b) => (a.meal_time ?? "").localeCompare(b.meal_time ?? "")).map((meal) => ({ id: meal.id, time: meal.meal_time?.slice(0, 5) ?? "", calories: String(meal.calories), detail: meal.detail })), exercises: (value.daily_exercises ?? []).map((exercise) => ({ id: exercise.id, type: exercise.exercise_type, part: exercise.exercise_part ?? "", note: exercise.exercise_note ?? "" })) });
+const blankDay = (date: string): DayData => ({ date, sleep: "", weight: "", ifHour: "", seedCycling: "", bedTier: "", water: false, poo: false, caffeine: false, period: false, note: "", meals: [], exercises: [] });
+const mapDay = (value: RawDay): DayData => ({ id: value.id, date: value.entry_date, sleep: value.sleep_hours?.toFixed(2) ?? "", weight: value.weight_kg?.toFixed(2) ?? "", ifHour: value.if_hour ?? "", seedCycling: value.seed_cycling ?? "", bedTier: value.bed_tier ?? "", water: value.water, poo: value.poo, caffeine: value.caffeine, period: value.period, note: value.note ?? "", meals: (value.daily_meals ?? []).sort((a, b) => (a.meal_time ?? "").localeCompare(b.meal_time ?? "")).map((meal) => ({ id: meal.id, time: meal.meal_time?.slice(0, 5) ?? "", calories: String(meal.calories), detail: meal.detail })), exercises: (value.daily_exercises ?? []).map((exercise) => ({ id: exercise.id, type: exercise.exercise_type, part: exercise.exercise_part ?? "", note: exercise.exercise_note ?? "" })) });
 
 const getOwnerId = async () => {
   const client = createClient();
@@ -22,14 +23,14 @@ const getOwnerId = async () => {
 
 export async function getDailyRecord(date: string) {
   const { client } = await getOwnerId();
-  const { data, error } = await client.from("daily_records").select("id, entry_date, sleep_hours, weight_kg, if_hour, seed_cycling, water, poo, caffeine, period, note, daily_meals(id, meal_time, calories, detail), daily_exercises(id, exercise_type, exercise_part, exercise_note)").eq("entry_date", date).maybeSingle();
+  const { data, error } = await client.from("daily_records").select("id, entry_date, sleep_hours, weight_kg, if_hour, seed_cycling, bed_tier, water, poo, caffeine, period, note, daily_meals(id, meal_time, calories, detail), daily_exercises(id, exercise_type, exercise_part, exercise_note)").eq("entry_date", date).maybeSingle();
   if (error) throw error;
   return data ? mapDay(data as RawDay) : blankDay(date);
 }
 
 export async function getDailyRecords() {
   const { client } = await getOwnerId();
-  const { data, error } = await client.from("daily_records").select("id, entry_date, sleep_hours, weight_kg, if_hour, seed_cycling, water, poo, caffeine, period, note, daily_meals(id, meal_time, calories, detail), daily_exercises(id, exercise_type, exercise_part, exercise_note)").order("entry_date");
+  const { data, error } = await client.from("daily_records").select("id, entry_date, sleep_hours, weight_kg, if_hour, seed_cycling, bed_tier, water, poo, caffeine, period, note, daily_meals(id, meal_time, calories, detail), daily_exercises(id, exercise_type, exercise_part, exercise_note)").order("entry_date");
   if (error) throw error;
   return (data ?? []).map((record) => mapDay(record as RawDay));
 }
@@ -37,7 +38,7 @@ export async function getDailyRecords() {
 export async function saveDailyRecord(day: DayData) {
   assertLocalWritable();
   const { client, userId } = await getOwnerId();
-  const { data, error } = await client.from("daily_records").upsert({ user_id: userId, entry_date: day.date, sleep_hours: day.sleep ? Number(day.sleep) : null, weight_kg: day.weight ? Number(day.weight) : null, if_hour: day.ifHour || null, seed_cycling: day.seedCycling || null, water: day.water, poo: day.poo, caffeine: day.caffeine, period: day.period, note: day.note.trim() || null }, { onConflict: "user_id,entry_date" }).select("id").single();
+  const { data, error } = await client.from("daily_records").upsert({ user_id: userId, entry_date: day.date, sleep_hours: day.sleep ? Number(day.sleep) : null, weight_kg: day.weight ? Number(day.weight) : null, if_hour: day.ifHour || null, seed_cycling: day.seedCycling || null, bed_tier: day.bedTier || null, water: day.water, poo: day.poo, caffeine: day.caffeine, period: day.period, note: day.note.trim() || null }, { onConflict: "user_id,entry_date" }).select("id").single();
   if (error) throw error;
   return data.id as string;
 }

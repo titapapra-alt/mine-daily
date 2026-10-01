@@ -73,6 +73,8 @@ const seedCyclingIcon = (phase: DailyRecord["seedCycling"]) => phase === "phase_
 const seedCyclingDescription = (phase: DailyRecord["seedCycling"]) => phase === "phase_1"
   ? "Phase 1, Pumpkin and Flax seeds"
   : "Phase 2, Sunflower and Black sesame seeds";
+const bedTierIcon = (tier: DailyRecord["bedTier"]) => tier === "tier_1" ? "🔥" : tier === "tier_2" ? "🔥🔥" : tier === "tier_3" ? "🔥🔥🔥" : null;
+const bedTierDescription = (tier: DailyRecord["bedTier"]) => tier ? `BED Tier ${tier.slice(-1)}` : "BED not selected";
 
 const formatMetricValue = (value: number, config: MetricConfig) => `${value.toLocaleString(undefined, {
   minimumFractionDigits: config.decimals,
@@ -298,7 +300,7 @@ export function InsightsDashboard() {
         {monthRecords.length ? (
           <div className="table-scroll" id="monthly-detail-panel">
             <table className={`insight-detail-table detail-tab-${detailTab}`}>
-              <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-routine">IF</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
+              <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-routine">IF</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
               <tbody>{monthRecords.map((record) => (
                 <tr key={record.date}>
                   <td className="detail-date"><Link className="insight-date-link" href={`/?date=${record.date}`} aria-label={`View dashboard for ${record.date}`}>{shortDate(record.date)}</Link></td>
@@ -314,6 +316,7 @@ export function InsightsDashboard() {
                   <td className="detail-habits">{record.caffeine ? <span className="habit-value-icon" role="img" aria-label="Caffeine recorded">☕</span> : "—"}</td>
                   <td className="detail-habits">{record.period ? <span className="habit-value-icon" role="img" aria-label="Period recorded">🩸</span> : "—"}</td>
                   <td className="detail-habits detail-seed-cycling">{seedCyclingIcon(record.seedCycling) ? <span className="seed-cycling-icon" role="img" aria-label={seedCyclingDescription(record.seedCycling)} title={seedCyclingDescription(record.seedCycling)}>{seedCyclingIcon(record.seedCycling)}</span> : "—"}</td>
+                  <td className="detail-habits detail-bed">{bedTierIcon(record.bedTier) ? <span className="bed-tier-icon" role="img" aria-label={bedTierDescription(record.bedTier)} title={bedTierDescription(record.bedTier)}>{bedTierIcon(record.bedTier)}</span> : "—"}</td>
                   <td className="insight-note-column detail-overview detail-note" title={record.note || undefined}>{record.note ? preview(record.note) : "—"}</td>
                 </tr>
               ))}</tbody>
