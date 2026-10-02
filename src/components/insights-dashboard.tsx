@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Activity, ChevronDown, CircleAlert, Droplets, Moon, Scale, Utensils } from "lucide-react";
 import { MonthYearPicker } from "@/components/month-year-picker";
+import { calorieStatus } from "@/lib/calorie-status";
 import { today } from "@/lib/utils";
 import { type DayData as DailyRecord, getDailyRecords } from "@/lib/daily-data";
 
@@ -280,7 +281,7 @@ export function InsightsDashboard() {
         <div className="insight-table-head"><div><span className="card-date">Monthly detail</span><h2>{monthName(selectedMonth)}</h2></div><p>{monthRecords.length} recorded day{monthRecords.length === 1 ? "" : "s"}</p></div>
         <div className="insight-table-thresholds" aria-label="Monthly detail alert thresholds">
           <CircleAlert size={15} aria-hidden="true" />
-          <span>Calories &gt; 2,000 kcal</span>
+          <span>Calories: &lt;1,800 Excellent · 1,800+ Be Careful · 2,000+ Over · 2,400+ Dangerous · 2,800+ Extremely Dangerous</span>
           <span>Sleep &lt; 6.0 h</span>
           <span>Weight &gt; 60.0 kg</span>
         </div>
@@ -304,7 +305,7 @@ export function InsightsDashboard() {
               <tbody>{monthRecords.map((record) => (
                 <tr key={record.date}>
                   <td className="detail-date"><Link className="insight-date-link" href={`/?date=${record.date}`} aria-label={`View dashboard for ${record.date}`}>{shortDate(record.date)}</Link></td>
-                  <td className="detail-overview"><TableMetricValue value={caloriesOf(record)} unit="kcal" threshold={2000} alertWhen="above" decimals={0} title={record.meals.length ? mealsTooltip(record) : undefined} className={record.meals.length ? "insight-calories-value" : undefined} /></td>
+                  <td className="detail-overview"><CaloriesTableValue value={caloriesOf(record)} title={record.meals.length ? mealsTooltip(record) : undefined} className={record.meals.length ? "insight-calories-value" : undefined} /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.sleep)} unit="h" threshold={6} alertWhen="below" /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.weight)} unit="kg" threshold={60} alertWhen="above" /></td>
                   <td className="detail-routine">{record.ifHour || "—"}</td>
@@ -330,6 +331,22 @@ export function InsightsDashboard() {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return <article><span>{icon}</span><p>{label}</p><strong>{value}</strong></article>;
+}
+
+function CaloriesTableValue({ value, title, className }: { value: number; title?: string; className?: string }) {
+  const { label, tone } = calorieStatus(value);
+  const formattedValue = value.toLocaleString();
+
+  return (
+    <span
+      className={["insight-metric-value", `calorie-status-${tone}`, className ?? ""].filter(Boolean).join(" ")}
+      title={title}
+      aria-label={`${formattedValue} kcal, ${label}`}
+    >
+      <span>{formattedValue} kcal</span>
+      {tone !== "excellent" && <span className="metric-alert-icon" aria-hidden="true"><CircleAlert size={14} /></span>}
+    </span>
+  );
 }
 
 function TableMetricValue({

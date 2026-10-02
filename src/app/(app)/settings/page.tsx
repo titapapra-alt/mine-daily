@@ -1,3 +1,17 @@
+import { CalorieFavoritesManager } from "@/components/calorie-favorites-manager";
+import { getCalorieFavorites } from "@/lib/calorie-favorites";
+import { isLocalPreview, isLocalReadOnly } from "@/lib/supabase/config";
 import { requireUser } from "@/lib/supabase/server";
-import { isLocalPreview } from "@/lib/supabase/config";
-export default async function SettingsPage() { const user = isLocalPreview ? { email: "Local preview" } : (await (await requireUser()).supabase.auth.getUser()).data.user; return <section className="page-sheet glass"><p className="eyebrow">Your little corner</p><h1 className="section-title">Settings</h1><div className="mt-8 max-w-xl rounded-[var(--radius-md)] bg-[rgba(255,253,246,.55)] p-6"><p className="font-bold">Signed in as</p><p className="mt-1 opacity-70">{user?.email}</p><p className="mt-6 text-sm opacity-70">{isLocalPreview ? "This is a local-only visual preview. It never bypasses sign-in in production." : "Your diary entries are protected by account ownership policies in the database. No one else can retrieve or edit them."}</p></div></section>; }
+
+export default async function SettingsPage() {
+  const [favorites, user] = await Promise.all([
+    getCalorieFavorites(),
+    isLocalPreview ? Promise.resolve({ email: "Local preview" }) : requireUser().then(({ supabase }) => supabase.auth.getUser()).then(({ data }) => data.user),
+  ]);
+
+  return <section className="settings-page page-sheet glass">
+    <div><p className="eyebrow" style={{ color: "var(--leaf)" }}>Your little corner</p><h1 className="section-title">Master settings.</h1><p className="section-subtitle">Manage reusable values that make daily tracking faster.</p></div>
+    <CalorieFavoritesManager initialFavorites={favorites} localPreview={isLocalPreview} readOnly={isLocalReadOnly} />
+    <aside className="settings-account"><p className="font-bold">Signed in as</p><p>{user?.email}</p><small>{isLocalPreview ? "This is a local-only visual preview." : "Favorites are private and protected by account ownership policies."}</small></aside>
+  </section>;
+}
