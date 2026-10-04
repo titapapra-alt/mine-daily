@@ -57,15 +57,6 @@ const exerciseEmoji: Record<string, string> = {
   hiit: "🔥",
 };
 const emojiForExercise = (type: string) => exerciseEmoji[type.trim().toLowerCase()] ?? "🏋🏽‍♀️";
-const groupExerciseTypes = (exercises: DailyRecord["exercises"]) => {
-  const groups = new Map<string, { type: string; count: number }>();
-  exercises.forEach((exercise) => {
-    const key = exercise.type.trim().toLowerCase();
-    const existing = groups.get(key);
-    groups.set(key, existing ? { ...existing, count: existing.count + 1 } : { type: exercise.type, count: 1 });
-  });
-  return [...groups.entries()].map(([key, value]) => ({ key, ...value }));
-};
 const mealsTooltip = (record: DailyRecord) => [...record.meals]
   .sort((first, second) => first.time.localeCompare(second.time))
   .map((meal) => `${meal.time || "—"} · ${(Number(meal.calories) || 0).toLocaleString()} kcal · ${meal.detail || "—"}`)
@@ -309,9 +300,9 @@ export function InsightsDashboard() {
                   <td className="detail-overview"><TableMetricValue value={numeric(record.sleep)} unit="h" threshold={6} alertWhen="below" /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.weight)} unit="kg" threshold={60} alertWhen="above" /></td>
                   <td className="detail-routine">{record.ifHour || "—"}</td>
-                  <td className="detail-routine detail-exercise">{record.exercises.length ? <span className="insight-exercise-emojis">{groupExerciseTypes(record.exercises).map((exercise) => <span className="insight-exercise-emoji" key={exercise.key} role="img" aria-label={`${exercise.type}${exercise.count > 1 ? `, ${exercise.count} records` : ""}`}>{emojiForExercise(exercise.type)}</span>)}</span> : "—"}</td>
+                  <td className="detail-routine detail-exercise">{record.exercises.length ? <span className="insight-exercise-emojis">{record.exercises.map((exercise) => <span className="insight-exercise-emoji" key={exercise.id} role="img" aria-label={exercise.type} title={exercise.type}>{emojiForExercise(exercise.type)}</span>)}</span> : "—"}</td>
                   <td className="detail-routine detail-part">{record.exercises.length ? <span className="routine-detail-lines">{record.exercises.map((exercise) => <span key={exercise.id}>{exercise.part || "—"}</span>)}</span> : "—"}</td>
-                  <td className="detail-routine detail-exercise-note">{record.exercises.length ? <span className="routine-detail-lines">{record.exercises.map((exercise) => <span key={exercise.id}>{exercise.note || "—"}</span>)}</span> : "—"}</td>
+                  <td className="detail-routine detail-exercise-note">{record.exercises.length ? <span className="routine-detail-lines">{record.exercises.map((exercise) => <span key={exercise.id} title={exercise.note || undefined}>{exercise.note || "—"}</span>)}</span> : "—"}</td>
                   <td className="detail-habits">{record.water ? <span className="habit-value-icon" role="img" aria-label="Water recorded">💦</span> : "—"}</td>
                   <td className="detail-habits">{record.poo ? <span className="habit-value-icon" role="img" aria-label="Poo recorded">💩</span> : "—"}</td>
                   <td className="detail-habits">{record.caffeine ? <span className="habit-value-icon" role="img" aria-label="Caffeine recorded">☕</span> : "—"}</td>
