@@ -1,0 +1,6 @@
+.modal-backdrop {
+  place-items: start center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(1.25rem, 4vh, 2.5rem) 1rem max(1rem, env(safe-area-inset-bottom));
+}
