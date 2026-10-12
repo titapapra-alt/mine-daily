@@ -6,7 +6,7 @@ import { Activity, ChevronDown, CircleAlert, Droplets, Moon, Scale, Utensils } f
 import { MonthYearPicker } from "@/components/month-year-picker";
 import { calorieStatus } from "@/lib/calorie-status";
 import { formatTimeDots, today } from "@/lib/utils";
-import { type DayData as DailyRecord, getDailyRecords } from "@/lib/daily-data";
+import { compareExercisesByTime, type DayData as DailyRecord, getDailyRecords } from "@/lib/daily-data";
 
 type Range = "week" | "month" | "year" | "all";
 type Metric = "calories" | "sleep" | "weight";
@@ -48,12 +48,7 @@ const averageOf = (records: DailyRecord[], read: (record: DailyRecord) => number
 const monthName = (value: string) => new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(new Date(`${value}-01T12:00:00`));
 const shortDate = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00`));
 const preview = (value: string, limit = 120) => value.length > limit ? `${value.slice(0, limit).trimEnd()}…` : value;
-const exerciseCollator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
-const sortExercisesAlphabetically = (exercises: DailyRecord["exercises"]) => [...exercises].sort((first, second) =>
-  exerciseCollator.compare(first.type, second.type)
-  || exerciseCollator.compare(first.part, second.part)
-  || exerciseCollator.compare(first.note, second.note)
-);
+const sortExercisesByTime = (exercises: DailyRecord["exercises"]) => [...exercises].sort(compareExercisesByTime);
 const mealsTooltip = (record: DailyRecord) => [...record.meals]
   .sort((first, second) => first.time.localeCompare(second.time))
   .map((meal) => `${meal.time || "—"} · ${(Number(meal.calories) || 0).toLocaleString()} kcal · ${meal.detail || "—"}`)
@@ -291,7 +286,7 @@ export function InsightsDashboard() {
             <table className={`insight-detail-table detail-tab-${detailTab}`}>
               <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-routine">IF</th><th className="detail-routine detail-time">Time</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
               <tbody>{monthRecords.map((record) => {
-                const exercises = sortExercisesAlphabetically(record.exercises);
+                const exercises = sortExercisesByTime(record.exercises);
                 return <tr key={record.date}>
                   <td className="detail-date"><Link className="insight-date-link" href={`/?date=${record.date}`} aria-label={`View dashboard for ${record.date}`}>{shortDate(record.date)}</Link></td>
                   <td className="detail-overview"><CaloriesTableValue value={caloriesOf(record)} title={record.meals.length ? mealsTooltip(record) : undefined} className={record.meals.length ? "insight-calories-value" : undefined} /></td>
