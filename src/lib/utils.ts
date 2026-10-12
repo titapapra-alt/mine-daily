@@ -12,5 +12,6 @@ export const parseDisplayDate = (value: string) => {
   return `${year}-${month}-${day}`;
 };
 export const isQuarterHour = (value: string) => /^([01]\d|2[0-3]):(00|15|30|45)$/.test(value);
+export const formatTimeDots = (value?: string) => value ? value.slice(0, 5).replace(":", ".") : "—";
 export const clip = (text: string, length = 148) => text.length > length ? `${text.slice(0, length).trimEnd()}…` : text;
 export const moodLabel = (mood: string | null) => mood ? mood[0].toUpperCase() + mood.slice(1) : "Unmarked";

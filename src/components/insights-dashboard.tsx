@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, ChevronDown, CircleAlert, Droplets, Moon, Scale, Utensils } from "lucide-react";
 import { MonthYearPicker } from "@/components/month-year-picker";
 import { calorieStatus } from "@/lib/calorie-status";
-import { today } from "@/lib/utils";
+import { formatTimeDots, today } from "@/lib/utils";
 import { type DayData as DailyRecord, getDailyRecords } from "@/lib/daily-data";
 
 type Range = "week" | "month" | "year" | "all";
@@ -48,15 +48,12 @@ const averageOf = (records: DailyRecord[], read: (record: DailyRecord) => number
 const monthName = (value: string) => new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(new Date(`${value}-01T12:00:00`));
 const shortDate = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00`));
 const preview = (value: string, limit = 120) => value.length > limit ? `${value.slice(0, limit).trimEnd()}…` : value;
-const exerciseEmoji: Record<string, string> = {
-  running: "🏃🏽‍♀️",
-  "weight training": "💪🏽",
-  badminton: "🏸",
-  yoga: "🧘🏽‍♀️",
-  stretching: "🤸🏽‍♀️",
-  hiit: "🔥",
-};
-const emojiForExercise = (type: string) => exerciseEmoji[type.trim().toLowerCase()] ?? "🏋🏽‍♀️";
+const exerciseCollator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
+const sortExercisesAlphabetically = (exercises: DailyRecord["exercises"]) => [...exercises].sort((first, second) =>
+  exerciseCollator.compare(first.type, second.type)
+  || exerciseCollator.compare(first.part, second.part)
+  || exerciseCollator.compare(first.note, second.note)
+);
 const mealsTooltip = (record: DailyRecord) => [...record.meals]
   .sort((first, second) => first.time.localeCompare(second.time))
   .map((meal) => `${meal.time || "—"} · ${(Number(meal.calories) || 0).toLocaleString()} kcal · ${meal.detail || "—"}`)
@@ -292,17 +289,19 @@ export function InsightsDashboard() {
         {monthRecords.length ? (
           <div className="table-scroll" id="monthly-detail-panel">
             <table className={`insight-detail-table detail-tab-${detailTab}`}>
-              <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-routine">IF</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
-              <tbody>{monthRecords.map((record) => (
-                <tr key={record.date}>
+              <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-routine">IF</th><th className="detail-routine detail-time">Time</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
+              <tbody>{monthRecords.map((record) => {
+                const exercises = sortExercisesAlphabetically(record.exercises);
+                return <tr key={record.date}>
                   <td className="detail-date"><Link className="insight-date-link" href={`/?date=${record.date}`} aria-label={`View dashboard for ${record.date}`}>{shortDate(record.date)}</Link></td>
                   <td className="detail-overview"><CaloriesTableValue value={caloriesOf(record)} title={record.meals.length ? mealsTooltip(record) : undefined} className={record.meals.length ? "insight-calories-value" : undefined} /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.sleep)} unit="h" threshold={6} alertWhen="below" /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.weight)} unit="kg" threshold={60} alertWhen="above" /></td>
                   <td className="detail-routine">{record.ifHour || "—"}</td>
-                  <td className="detail-routine detail-exercise">{record.exercises.length ? <span className="insight-exercise-emojis">{record.exercises.map((exercise) => <span className="insight-exercise-emoji" key={exercise.id} role="img" aria-label={exercise.type} title={exercise.type}>{emojiForExercise(exercise.type)}</span>)}</span> : "—"}</td>
-                  <td className="detail-routine detail-part">{record.exercises.length ? <span className="routine-detail-lines">{record.exercises.map((exercise) => <span key={exercise.id}>{exercise.part || "—"}</span>)}</span> : "—"}</td>
-                  <td className="detail-routine detail-exercise-note">{record.exercises.length ? <span className="routine-detail-lines">{record.exercises.map((exercise) => <span key={exercise.id} title={exercise.note || undefined}>{exercise.note || "—"}</span>)}</span> : "—"}</td>
+                  <td className="detail-routine detail-time">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id}>{formatTimeDots(exercise.time)}</span>)}</span> : "—"}</td>
+                  <td className="detail-routine detail-exercise">{exercises.length ? <span className="insight-exercise-emojis">{exercises.map((exercise) => <span className="insight-exercise-label" key={exercise.id}>{exercise.type}</span>)}</span> : "—"}</td>
+                  <td className="detail-routine detail-part">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id}>{exercise.part || "—"}</span>)}</span> : "—"}</td>
+                  <td className="detail-routine detail-exercise-note">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id} title={exercise.note || undefined}>{exercise.note || "—"}</span>)}</span> : "—"}</td>
                   <td className="detail-habits">{record.water ? <span className="habit-value-icon" role="img" aria-label="Water recorded">💦</span> : "—"}</td>
                   <td className="detail-habits">{record.poo ? <span className="habit-value-icon" role="img" aria-label="Poo recorded">💩</span> : "—"}</td>
                   <td className="detail-habits">{record.caffeine ? <span className="habit-value-icon" role="img" aria-label="Caffeine recorded">☕</span> : "—"}</td>
@@ -310,8 +309,8 @@ export function InsightsDashboard() {
                   <td className="detail-habits detail-seed-cycling">{seedCyclingIcon(record.seedCycling) ? <span className="seed-cycling-icon" role="img" aria-label={seedCyclingDescription(record.seedCycling)} title={seedCyclingDescription(record.seedCycling)}>{seedCyclingIcon(record.seedCycling)}</span> : "—"}</td>
                   <td className="detail-habits detail-bed">{bedTierIcon(record.bedTier) ? <span className="bed-tier-icon" role="img" aria-label={bedTierDescription(record.bedTier)} title={bedTierDescription(record.bedTier)}>{bedTierIcon(record.bedTier)}</span> : "—"}</td>
                   <td className="insight-note-column detail-overview detail-note" title={record.note || undefined}>{record.note ? preview(record.note) : "—"}</td>
-                </tr>
-              ))}</tbody>
+                </tr>;
+              })}</tbody>
             </table>
           </div>
         ) : <div className="insight-empty">No daily data for this month. Add a daily record from Home to start seeing your patterns.</div>}
