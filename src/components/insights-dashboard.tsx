@@ -34,7 +34,7 @@ const metricConfigs: MetricConfig[] = [
 ];
 const detailTabs: { value: DetailTab; label: string }[] = [
   { value: "overview", label: "Overview" },
-  { value: "routine", label: "Routine" },
+  { value: "routine", label: "Exercise" },
   { value: "habits", label: "Habits" },
 ];
 
@@ -284,7 +284,7 @@ export function InsightsDashboard() {
         {monthRecords.length ? (
           <div className="table-scroll" id="monthly-detail-panel">
             <table className={`insight-detail-table detail-tab-${detailTab}`}>
-              <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-routine">IF</th><th className="detail-routine detail-time">Time</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
+              <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-overview">IF</th><th className="detail-routine detail-time">Time</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
               <tbody>{monthRecords.map((record) => {
                 const exercises = sortExercisesByTime(record.exercises);
                 return <tr key={record.date}>
@@ -292,7 +292,7 @@ export function InsightsDashboard() {
                   <td className="detail-overview"><CaloriesTableValue value={caloriesOf(record)} title={record.meals.length ? mealsTooltip(record) : undefined} className={record.meals.length ? "insight-calories-value" : undefined} /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.sleep)} unit="h" threshold={6} alertWhen="below" /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.weight)} unit="kg" threshold={60} alertWhen="above" /></td>
-                  <td className="detail-routine">{record.ifHour || "—"}</td>
+                  <td className="detail-overview">{record.ifHour || "—"}</td>
                   <td className="detail-routine detail-time">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id}>{formatTimeDots(exercise.time)}</span>)}</span> : "—"}</td>
                   <td className="detail-routine detail-exercise">{exercises.length ? <span className="insight-exercise-emojis">{exercises.map((exercise) => <span className="insight-exercise-label" key={exercise.id}>{exercise.type}</span>)}</span> : "—"}</td>
                   <td className="detail-routine detail-part">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id}>{exercise.part || "—"}</span>)}</span> : "—"}</td>
