@@ -287,7 +287,10 @@ export function InsightsDashboard() {
               <thead><tr><th className="detail-date">Date</th><th className="detail-overview">Calories</th><th className="detail-overview">Sleep</th><th className="detail-overview">Weight</th><th className="detail-overview">IF</th><th className="detail-routine detail-stretching">Stretching</th><th className="detail-routine detail-time">Time</th><th className="detail-routine detail-exercise">Exercise</th><th className="detail-routine detail-part">Part</th><th className="detail-routine detail-exercise-note">Note</th><th className="detail-habits">Water</th><th className="detail-habits">Poo</th><th className="detail-habits">Caffeine</th><th className="detail-habits">Period</th><th className="detail-habits detail-seed-cycling">Seed Cycling</th><th className="detail-habits detail-bed">BED</th><th className="insight-note-column detail-overview detail-note">Note</th></tr></thead>
               <tbody>{monthRecords.map((record) => {
                 const allExercises = sortExercisesByTime(record.exercises);
-                const hasStretching = allExercises.some((exercise) => exercise.type.trim().toLowerCase() === "stretching");
+                const stretchingExercises = allExercises.filter((exercise) => exercise.type.trim().toLowerCase() === "stretching");
+                const stretchingDetails = stretchingExercises
+                  .map((exercise, index) => `${stretchingExercises.length > 1 ? `${index + 1}. ` : ""}Time: ${formatTimeDots(exercise.time)} · Note: ${exercise.note.trim() || "—"}`)
+                  .join("\n");
                 const exercises = allExercises.filter((exercise) => exercise.type.trim().toLowerCase() !== "stretching");
                 return <tr key={record.date}>
                   <td className="detail-date"><Link className="insight-date-link" href={`/?date=${record.date}`} aria-label={`View dashboard for ${record.date}`}>{shortDate(record.date)}</Link></td>
@@ -295,7 +298,7 @@ export function InsightsDashboard() {
                   <td className="detail-overview"><TableMetricValue value={numeric(record.sleep)} unit="h" threshold={6} alertWhen="below" /></td>
                   <td className="detail-overview"><TableMetricValue value={numeric(record.weight)} unit="kg" threshold={60} alertWhen="above" /></td>
                   <td className="detail-overview">{record.ifHour || "—"}</td>
-                  <td className="detail-routine detail-stretching">{hasStretching ? <span className="stretching-value-icon" role="img" aria-label="Stretching recorded" title="Stretching recorded">🤸‍♀️</span> : "—"}</td>
+                  <td className="detail-routine detail-stretching">{stretchingExercises.length ? <span className="stretching-value-icon" role="img" aria-label={`Stretching recorded. ${stretchingDetails}`} title={stretchingDetails}>🤸‍♀️</span> : "—"}</td>
                   <td className="detail-routine detail-time">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id}>{formatTimeDots(exercise.time)}</span>)}</span> : "—"}</td>
                   <td className="detail-routine detail-exercise">{exercises.length ? <span className="insight-exercise-emojis">{exercises.map((exercise) => <span className="insight-exercise-label" key={exercise.id}>{exercise.type}</span>)}</span> : "—"}</td>
                   <td className="detail-routine detail-part">{exercises.length ? <span className="routine-detail-lines">{exercises.map((exercise) => <span key={exercise.id}>{exercise.part || "—"}</span>)}</span> : "—"}</td>
